@@ -1,5 +1,5 @@
 import ws from "ws";
-import { Logger } from "@ydipeepo/node-debug";
+import type { Logger } from "@ydipeepo/node-debug";
 
 export default interface WebSocketOptions extends ws.ClientOptions {
 
