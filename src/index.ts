@@ -147,7 +147,7 @@ function createWebSocketStream(endpointUrl: string, options?: WebSocketOptions):
 
 	const stream: any = createDataStream(socket, socketEventQueue);
 	stream.endpointUrl = endpointUrl;
-	stream.close = () => socket.close;
+	stream.send = (data: string | ArrayBuffer) => socket.send(data);
 	return stream;
 
 }
