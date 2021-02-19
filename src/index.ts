@@ -142,12 +142,32 @@ async function *createDataStream(socket: WebSocket, socketEventQueue: Concurrent
 
 function createWebSocketStream(endpointUrl: string, options?: WebSocketOptions): WebSocketStream {
 
+	let pendingDataQueue: undefined | (string | ArrayBuffer)[];
+
 	const socketEventQueue = new ConcurrentQueue<WebSocketEvent>();
-	const socket = createWebSocket(endpointUrl, event => socketEventQueue.add(event), options);
+	const socket = createWebSocket(endpointUrl, event => {
+
+		if (event.type === "opened") {
+			if (pendingDataQueue !== undefined) {
+				for (const data of pendingDataQueue) {
+					socket.send(data);
+				}
+				pendingDataQueue = undefined;
+			}
+			stream.send = (data: string | ArrayBuffer) => socket.send(data);
+			return;
+		}
+
+		socketEventQueue.add(event);
+
+	}, options);
 
 	const stream: any = createDataStream(socket, socketEventQueue);
 	stream.endpointUrl = endpointUrl;
-	stream.send = (data: string | ArrayBuffer) => socket.send(data);
+	stream.send = (data: string | ArrayBuffer) => {
+		pendingDataQueue ??= [];
+		pendingDataQueue.push(data);
+	};
 	return stream;
 
 }
