@@ -1,6 +1,6 @@
 {
 	"name": "@ydipeepo/node-websocket",
-	"version": "0.1.5",
+	"version": "0.1.6",
 	"author": "Ydi",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -33,7 +33,7 @@
 	},
 	"dependencies": {
 		"@types/ws": "^7.4.0",
-		"@ydipeepo/node-async": "^0.1.2",
+		"@ydipeepo/node-async": "^0.1.4",
 		"@ydipeepo/node-debug": "^0.1.2",
 		"@ydipeepo/noop": "^1.0.0",
 		"ws": "^7.4.3"
