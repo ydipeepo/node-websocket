@@ -41,7 +41,7 @@ describe("node-websocket", () => {
 		stream.send("world");
 		for await (const data of stream) {
 			expect(data).is.equal("world");
-			stream.return();
+			await stream.return();
 		}
 	});
 
