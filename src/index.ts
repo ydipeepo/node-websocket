@@ -57,6 +57,7 @@ function createWebSocket(endpointUrl: string, callback: (event: WebSocketEvent) 
 	const send = (data: string | ArrayBuffer) => {
 		
 		if (socket && socket.readyState === ws.OPEN) {
+			logger?.debug("Sending data.");
 			socket.send(data);
 		} else {
 			const error = new Error("Socket is not the OPEN state.");
@@ -98,6 +99,7 @@ function createWebSocket(endpointUrl: string, callback: (event: WebSocketEvent) 
 	socket.onmessage = event => {
 
 		try {
+			logger?.debug("Received data.");
 			callback({ type: "data_received", data: event.data } as WebSocketDataReceivedEvent);
 		} catch (error) {
 			close(error);
@@ -130,7 +132,8 @@ async function *createDataStream(socket: WebSocket, socketEventQueue: Concurrent
 				case "closed":
 					break _PUMP;
 				case "error":
-					throw event.error;
+					if (event.error !== undefined) throw event.error;
+					break;
 			}
 		}
 
