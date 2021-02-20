@@ -1,5 +1,4 @@
 import { AsyncStream } from "@ydipeepo/node-async";
-import WebSocketEvent from "./WebSocketEvent";
 
 export default interface WebSocketStream extends AsyncStream<string | ArrayBuffer> {
 

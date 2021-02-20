@@ -144,7 +144,7 @@ function createWebSocketStream(endpointUrl: string, options?: WebSocketOptions):
 	// イベントキューからデータを受け取るストリームを作成
 	//
 
-	async function *createStream(): AsyncStream<string | ArrayBuffer> {
+	async function *createStream(): AsyncGenerator<string | ArrayBuffer, void, void> {
 
 		try {
 	
@@ -182,7 +182,7 @@ function createWebSocketStream(endpointUrl: string, options?: WebSocketOptions):
 	
 	}
 
-	const stream: any = createStream();
+	const stream: any = AsyncStream.from(createStream());
 	stream.endpointUrl = endpointUrl;
 	stream.send = sendDeferred;
 	return stream;
