@@ -115,62 +115,76 @@ function createWebSocket(endpointUrl: string, callback: (event: WebSocketEvent) 
 
 }
 
-async function *createDataStream(socket: WebSocket, socketEventQueue: ConcurrentQueue<WebSocketEvent>): AsyncStream<string | ArrayBuffer> {
-
-	try {
-
-		//
-		// ポンプし `data_received` イベントだけ返すよう変形
-		//
-
-	_PUMP:
-		while (true) {
-			const event = await socketEventQueue.get();
-			switch (event.type) {
-				case "data_received":
-					yield event.data;
-				case "closed":
-					break _PUMP;
-				case "error":
-					if (event.error !== undefined) throw event.error;
-					break;
-			}
-		}
-
-	} finally {
-		socket.close();
-	}
-
-}
-
+/**
+ * 受信したデータのストリームとしてソケットオブジェクトを作成します。
+ * @param endpointUrl 接続先 URL。
+ * @param options ソケット作成オプション。
+ */
 function createWebSocketStream(endpointUrl: string, options?: WebSocketOptions): WebSocketStream {
 
-	let pendingDataQueue: undefined | (string | ArrayBuffer)[];
+	//
+	// ソケットとそのイベントを仲介するキューを作成
+	//
 
 	const socketEventQueue = new ConcurrentQueue<WebSocketEvent>();
-	const socket = createWebSocket(endpointUrl, event => {
+	const socket = createWebSocket(endpointUrl, event => socketEventQueue.add(event), options);
 
-		if (event.type === "opened") {
-			if (pendingDataQueue !== undefined) {
-				for (const data of pendingDataQueue) {
-					socket.send(data);
-				}
-				pendingDataQueue = undefined;
-			}
-			stream.send = (data: string | ArrayBuffer) => socket.send(data);
-			return;
-		}
+	//
+	// 接続を確立するまでの間、送信しようとしたデータは一時的なバッファに蓄える
+	//
 
-		socketEventQueue.add(event);
-
-	}, options);
-
-	const stream: any = createDataStream(socket, socketEventQueue);
-	stream.endpointUrl = endpointUrl;
-	stream.send = (data: string | ArrayBuffer) => {
-		pendingDataQueue ??= [];
-		pendingDataQueue.push(data);
+	let sendDataQueue: undefined | (string | ArrayBuffer)[];
+	const send = (data: string | ArrayBuffer) => socket.send(data);
+	const sendDeferred = (data: string | ArrayBuffer) => {
+		sendDataQueue ??= [];
+		sendDataQueue.push(data);
 	};
+
+	//
+	// イベントキューからデータを受け取るストリームを作成
+	//
+
+	async function *createStream(): AsyncStream<string | ArrayBuffer> {
+
+		try {
+	
+			//
+			// イベントをポンプし `data_received` イベントだけ返すよう変形
+			// その他のイベントはストリームに合わせてここで処理します
+			//
+
+		_PUMP:
+			while (true) {
+				const event = await socketEventQueue.get();
+				switch (event.type) {
+					case "data_received":
+						yield event.data;
+						break;
+					case "opened":
+						if (sendDataQueue !== undefined) {
+							for (const data of sendDataQueue) {
+								socket.send(data);
+							}
+							sendDataQueue = undefined;
+						}
+						stream.send = send;
+						break;
+					case "error":
+						if (event.error !== undefined) throw event.error;
+						break;
+					case "closed":
+						break _PUMP;
+				}
+			}
+		} finally {
+			socket.close();
+		}
+	
+	}
+
+	const stream: any = createStream();
+	stream.endpointUrl = endpointUrl;
+	stream.send = sendDeferred;
 	return stream;
 
 }

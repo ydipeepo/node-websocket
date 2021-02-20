@@ -21,12 +21,16 @@ describe("node-websocket", () => {
 					break;
 				case "data_received":
 					if (event.data === "hello") {
+						socket.send("world");
+						step++;
+					}
+					if (event.data === "world") {
 						socket.close();
 						step++;
 					}
 					break;
 				case "closed":
-					expect(step).to.equal(2);
+					expect(step).to.equal(3);
 					resolve();
 					break;
 				case "error":
@@ -37,12 +41,20 @@ describe("node-websocket", () => {
 	});
 
 	it("createWebSocketStream", async () => {
+		let step = 0;
 		const stream = createWebSocketStream(endpointUrl, options);
-		stream.send("world");
+		stream.send("hello");
 		for await (const data of stream) {
-			expect(data).is.equal("world");
-			await stream.return();
+			if (data === "hello") {
+				stream.send("world");
+				step++;
+			}
+			if (data === "world") {
+				await stream.return();
+				step++;
+			}
 		}
+		expect(step).is.equal(2);
 	});
 
 });
