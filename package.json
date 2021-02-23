@@ -34,7 +34,7 @@
 	"dependencies": {
 		"@types/ws": "^7.4.0",
 		"@ydipeepo/node-async": "^0.2.0",
-		"@ydipeepo/node-debug": "^0.1.2",
+		"@ydipeepo/node-debug": "^0.2.0",
 		"@ydipeepo/noop": "^1.0.0",
 		"ws": "^7.4.3"
 	}
