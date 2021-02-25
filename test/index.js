@@ -1,19 +1,17 @@
-const { createLogger } = require("@ydipeepo/node-debug");
+const { ConsoleLoggerFactory } = require("@ydipeepo/node-debug");
 const { expect } = require("chai");
 
 describe("node-websocket", () => {
 
+	const loggerFactory = new ConsoleLoggerFactory();
 	const endpointUrl = "ws://localhost:8000";
-	const options = { logger: createLogger("node-websocket") };
+	const options = { logger: loggerFactory.create("node-websocket") };
 
-	const {
-		createWebSocket,
-		createWebSocketStream,
-	} = require("../dist");
+	const { WebSocket, WebSocketStream } = require("../dist");
 
-	it("createWebSocket", () => {
+	it("socket", () => {
 		let step = 0;
-		const socket = createWebSocket(endpointUrl, event => new Promise((resolve, reject) => {
+		const socket = WebSocket.create(endpointUrl, event => new Promise((resolve, reject) => {
 			switch (event.type) {
 				case "opened":
 					socket.send("hello");
@@ -40,9 +38,9 @@ describe("node-websocket", () => {
 		}), options);
 	});
 
-	it("createWebSocketStream", async () => {
+	it("socket stream", async () => {
 		let step = 0;
-		const stream = createWebSocketStream(endpointUrl, options);
+		const stream = WebSocketStream.create(endpointUrl, options);
 		stream.send("hello");
 		for await (const data of stream) {
 			if (data === "hello") {

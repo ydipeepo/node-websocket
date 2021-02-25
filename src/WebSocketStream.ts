@@ -50,7 +50,7 @@ namespace WebSocketStream {
 		// イベントキューからデータを受け取るストリームを作成
 		//
 
-		async function *createStream(): AsyncGenerator<string | ArrayBuffer, void, void> {
+		async function *createGenerator(): AsyncGenerator<string | ArrayBuffer, void, void> {
 
 			try {
 		
@@ -88,7 +88,7 @@ namespace WebSocketStream {
 		
 		}
 
-		const stream: any = AsyncStream.from(createStream());
+		const stream: any = AsyncStream.from(createGenerator());
 		stream.endpointUrl = endpointUrl;
 		stream.send = sendDeferred;
 		return stream;
