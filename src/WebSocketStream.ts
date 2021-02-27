@@ -1,4 +1,4 @@
-import { AsyncStream, ConcurrentQueue } from "@ydipeepo/node-async";
+import { AsyncStream, ConcurrentQueue, Signal } from "@ydipeepo/node-async";
 
 import WebSocket from "./WebSocket";
 import WebSocketOptions from "./WebSocketOptions";
@@ -52,6 +52,8 @@ namespace WebSocketStream {
 
 		async function *createGenerator(): AsyncGenerator<string | ArrayBuffer, void, void> {
 
+			const stopRequest = new Signal();
+
 			try {
 		
 				//
@@ -61,7 +63,7 @@ namespace WebSocketStream {
 
 			_PUMP:
 				while (true) {
-					const event = await socketEventQueue.get();
+					const event = await socketEventQueue.get(stopRequest);
 					switch (event.type) {
 						case "data_received":
 							yield event.data;
@@ -83,6 +85,7 @@ namespace WebSocketStream {
 					}
 				}
 			} finally {
+				stopRequest.trigger();
 				socket.close();
 			}
 		
