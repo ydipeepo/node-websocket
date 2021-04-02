@@ -4,7 +4,7 @@ const { expect } = require("chai");
 describe("node-websocket", () => {
 
 	const loggerFactory = new ConsoleLoggerFactory();
-	const endpointUrl = "ws://localhost:8000";
+	const endpointUrl = "ws://localhost:8000/hello";
 	const options = { logger: loggerFactory.create("node-websocket") };
 
 	const { WebSocket, WebSocketStream } = require("../dist");

@@ -16,7 +16,7 @@ interface WebSocket {
 	/**
 	 * 接続先 URL。
 	 */
-	readonly endpointUrl: string;
+	readonly endpoint: string;
 
 	/**
 	 * 指定したデータを送信します。
@@ -34,23 +34,25 @@ interface WebSocket {
 namespace WebSocket {
 
 	function isCloseEvent(event?: any): event is CloseEvent {
+
 		return (
 			event &&
 			typeof event.wasClean === "boolean" &&
 			typeof event.code === "number");
+
 	}
 
 	/**
 	 * すべてのイベントを `callback` に集約し、切断処理を実装したソケットオブジェクトを作成します。
-	 * @param endpointUrl 接続先 URL。
+	 * @param endpoint 接続先 URL。
 	 * @param callback イベントを受け取るためのコールバック。
 	 * @param options ソケット作成オプション。
 	 */
-	export function create(endpointUrl: string, callback: (event: WebSocketEvent) => void, options?: WebSocketOptions): WebSocket {
+	export function create(endpoint: string, callback: (event: WebSocketEvent) => void, options?: WebSocketOptions): WebSocket {
 
 		const logger = options?.logger;
 
-		let socket: ws | undefined = new ws(endpointUrl, options);
+		let socket: ws | undefined = new ws(endpoint, options);
 		let opened = false;
 
 		const close = (event?: CloseEvent | Error) => {
@@ -67,11 +69,11 @@ namespace WebSocket {
 
 			if (isCloseEvent(event) && (event.wasClean === false || event.code !== 1000)) {
 				const error = new Error(`Socket closed with status code: ${event.code} (${event.reason})`);
-				callback({ type: "closed", error } as WebSocketClosedEvent);
+				callback({ type: "closed", error });
 			} else if (event instanceof Error) {
-				callback({ type: "closed", error: event } as WebSocketClosedEvent);
+				callback({ type: "closed", error: event });
 			} else {
-				callback({ type: "closed" } as WebSocketClosedEvent);
+				callback({ type: "closed" });
 			}
 
 		};
@@ -83,16 +85,16 @@ namespace WebSocket {
 				socket.send(data);
 			} else {
 				const error = new Error("Socket is not the OPEN state.");
-				callback({ type: "error", error } as WebSocketErrorEvent);
+				callback({ type: "error", error });
 			}
 
 		};
 
 		socket.onopen = () => {
-			
-			logger?.info(`Connected to endpoint: ${endpointUrl}`);
+
+			logger?.info(`Connected to endpoint: ${endpoint}`);
 			opened = true;
-			callback({ type: "opened" } as WebSocketOpenedEvent);
+			callback({ type: "opened" });
 
 		};
 
@@ -104,7 +106,7 @@ namespace WebSocket {
 				const error = event instanceof ErrorEvent
 					? event.error
 					: new Error("There was an error with the socket.");
-				callback({ type: "error", error } as WebSocketErrorEvent);
+				callback({ type: "error", error });
 			}
 
 		};
@@ -114,7 +116,7 @@ namespace WebSocket {
 			const error = event instanceof ErrorEvent
 				? event.error
 				: new Error("There was an error with the socket.");
-			callback({ type: "error", error } as WebSocketErrorEvent);
+			callback({ type: "error", error });
 
 		};
 
@@ -122,7 +124,7 @@ namespace WebSocket {
 
 			try {
 				logger?.debug("Received data.");
-				callback({ type: "data_received", data: event.data } as WebSocketDataReceivedEvent);
+				callback({ type: "data_received", data: event.data as string | ArrayBuffer });
 			} catch (error) {
 				close(error);
 			}
@@ -130,13 +132,12 @@ namespace WebSocket {
 		};
 
 		return {
-			endpointUrl,
+			endpoint,
 			send,
 			close,
 		};
 
 	}
-
 
 }
 
